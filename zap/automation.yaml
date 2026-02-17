@@ -1,0 +1,52 @@
+env:
+  contexts:
+    - name: playground
+      urls:
+        - http://app:8080
+      includePaths:
+        - http://app:8080.*
+      authentication:
+        method: form
+        parameters:
+          loginPageUrl: http://app:8080/login
+          loginRequestUrl: http://app:8080/login
+          loginRequestBody: username={%username%}&password={%password%}
+      sessionManagement:
+        method: cookie
+      users:
+        - name: zap-user
+          credentials:
+            username: testuser
+            password: testpass
+      forcedUserMode: true
+  parameters:
+    failOnError: true
+    progressToStdout: true
+
+jobs:
+  - type: spider
+    parameters:
+      context: playground
+      user: zap-user
+      maxDuration: 1
+
+  - type: activeScan
+    parameters:
+      context: playground
+      user: zap-user
+      maxRuleDurationInMins: 1
+      maxScanDurationInMins: 3
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: /zap/wrk/reports
+      reportFile: zap-report.html
+      reportTitle: ZAP Playground Report
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: /zap/wrk/reports
+      reportFile: zap-report.json
+      reportTitle: ZAP Playground Report

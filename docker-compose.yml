@@ -1,0 +1,21 @@
+services:
+  app:
+    build:
+      context: ./app
+    container_name: zap-playground-app
+    environment:
+      APP_SECRET: change-me-in-real-scenarios
+      APP_USER: testuser
+      APP_PASSWORD: testpass
+    ports:
+      - "8080:8080"
+
+  zap:
+    image: zaproxy/zap-stable:latest
+    container_name: zap-playground-zap
+    depends_on:
+      - app
+    working_dir: /zap/wrk
+    volumes:
+      - ./zap:/zap/wrk/zap
+      - ./reports:/zap/wrk/reports
