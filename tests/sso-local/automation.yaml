@@ -1,0 +1,50 @@
+env:
+  contexts:
+    - name: playground-sso-local
+      urls:
+        - http://sso:4180
+      includePaths:
+        - http://sso:4180.*
+      authentication:
+        method: browser
+        parameters:
+          loginPageUrl: http://sso:4180/private
+          browserId: firefox-headless
+      sessionManagement:
+        method: cookie
+      users:
+        - name: demo-sso-user
+          credentials:
+            username: demo-user
+            password: demo-pass
+  parameters:
+    failOnError: true
+    progressToStdout: true
+
+jobs:
+  - type: spider
+    parameters:
+      context: playground-sso-local
+      user: demo-sso-user
+      maxDuration: 2
+
+  - type: passiveScan
+    parameters:
+      context: playground-sso-local
+      user: demo-sso-user
+      maxRuleDurationInMins: 1
+      maxScanDurationInMins: 5
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: /zap/wrk/reports
+      reportFile: zap-sso-local-report.html
+      reportTitle: ZAP Local SSO Report
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: /zap/wrk/reports
+      reportFile: zap-sso-local-report.json
+      reportTitle: ZAP Local SSO Report

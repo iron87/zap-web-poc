@@ -1,8 +1,4 @@
 #!/usr/bin/env sh
 set -eu
 
-mkdir -p reports
-
-docker compose up -d --build app
-
-echo "App avviata su http://localhost:8080"
+exec "$(dirname "$0")/form-login/01-up.sh"

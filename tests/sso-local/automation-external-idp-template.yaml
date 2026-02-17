@@ -1,0 +1,53 @@
+env:
+  contexts:
+    - name: playground-sso
+      urls:
+        - https://target.example.com
+      includePaths:
+        - https://target.example.com/.*
+      # Template for external IdP login (example: Microsoft Entra ID / Office 365).
+      # Replace URLs and credentials with your test environment values.
+      authentication:
+        method: browser
+        parameters:
+          # A protected page that redirects to the external login flow.
+          loginPageUrl: https://target.example.com/private
+          browserId: firefox-headless
+      sessionManagement:
+        method: cookie
+      users:
+        - name: sso-user
+          credentials:
+            username: user@example.com
+            password: REPLACE_WITH_TEST_PASSWORD
+  parameters:
+    failOnError: true
+    progressToStdout: true
+
+jobs:
+  - type: spider
+    parameters:
+      context: playground-sso
+      user: sso-user
+      maxDuration: 2
+
+  - type: activeScan
+    parameters:
+      context: playground-sso
+      user: sso-user
+      maxRuleDurationInMins: 1
+      maxScanDurationInMins: 5
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: /zap/wrk/reports
+      reportFile: zap-sso-report.html
+      reportTitle: ZAP SSO Example Report
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: /zap/wrk/reports
+      reportFile: zap-sso-report.json
+      reportTitle: ZAP SSO Example Report

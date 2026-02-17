@@ -1,0 +1,45 @@
+{
+  "realm": "playground",
+  "enabled": true,
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "clients": [
+    {
+      "clientId": "zap-sso-client",
+      "name": "ZAP SSO Client",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "zap-sso-client-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:4180/oauth2/callback",
+        "http://sso:4180/oauth2/callback"
+      ],
+      "webOrigins": [
+        "*"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "demo-user",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Demo",
+      "lastName": "User",
+      "email": "demo-user@example.local",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo-pass",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

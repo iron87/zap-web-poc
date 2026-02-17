@@ -10,12 +10,77 @@ services:
     ports:
       - "8080:8080"
 
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.1
+    container_name: zap-playground-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak/realm-playground.json:/opt/keycloak/data/import/realm-playground.json:ro
+    ports:
+      - "8090:8080"
+
+  sso:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.8.1
+    container_name: zap-playground-sso
+    restart: unless-stopped
+    depends_on:
+      - app
+      - keycloak
+    environment:
+      OAUTH2_PROXY_PROVIDER: oidc
+      OAUTH2_PROXY_OIDC_ISSUER_URL: http://keycloak:8080/realms/playground
+      OAUTH2_PROXY_CLIENT_ID: zap-sso-client
+      OAUTH2_PROXY_CLIENT_SECRET: zap-sso-client-secret
+      OAUTH2_PROXY_COOKIE_SECRET: MDEyMzQ1Njc4OWFiY2RlZg==
+      OAUTH2_PROXY_COOKIE_SECURE: "false"
+      OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
+      OAUTH2_PROXY_REDIRECT_URL: http://sso:4180/oauth2/callback
+      OAUTH2_PROXY_UPSTREAMS: http://app:8080
+      OAUTH2_PROXY_EMAIL_DOMAINS: "*"
+      OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: "true"
+      OAUTH2_PROXY_SET_XAUTHREQUEST: "true"
+      OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER: "true"
+      OAUTH2_PROXY_SCOPE: openid profile email
+
+  sso-public:
+    image: quay.io/oauth2-proxy/oauth2-proxy:v7.8.1
+    container_name: zap-playground-sso-public
+    restart: unless-stopped
+    depends_on:
+      - app
+      - keycloak
+    environment:
+      OAUTH2_PROXY_PROVIDER: oidc
+      OAUTH2_PROXY_SKIP_OIDC_DISCOVERY: "true"
+      OAUTH2_PROXY_OIDC_ISSUER_URL: http://localhost:8090/realms/playground
+      OAUTH2_PROXY_LOGIN_URL: http://localhost:8090/realms/playground/protocol/openid-connect/auth
+      OAUTH2_PROXY_REDEEM_URL: http://keycloak:8080/realms/playground/protocol/openid-connect/token
+      OAUTH2_PROXY_OIDC_JWKS_URL: http://keycloak:8080/realms/playground/protocol/openid-connect/certs
+      OAUTH2_PROXY_CLIENT_ID: zap-sso-client
+      OAUTH2_PROXY_CLIENT_SECRET: zap-sso-client-secret
+      OAUTH2_PROXY_COOKIE_SECRET: MDEyMzQ1Njc4OWFiY2RlZg==
+      OAUTH2_PROXY_COOKIE_SECURE: "false"
+      OAUTH2_PROXY_HTTP_ADDRESS: 0.0.0.0:4180
+      OAUTH2_PROXY_REDIRECT_URL: http://localhost:4180/oauth2/callback
+      OAUTH2_PROXY_UPSTREAMS: http://app:8080
+      OAUTH2_PROXY_EMAIL_DOMAINS: "*"
+      OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: "true"
+      OAUTH2_PROXY_SET_XAUTHREQUEST: "true"
+      OAUTH2_PROXY_PASS_AUTHORIZATION_HEADER: "true"
+      OAUTH2_PROXY_SCOPE: openid profile email
+    ports:
+      - "4180:4180"
+
   zap:
     image: zaproxy/zap-stable:latest
     container_name: zap-playground-zap
     depends_on:
       - app
+      - sso
     working_dir: /zap/wrk
     volumes:
-      - ./zap:/zap/wrk/zap
+      - ./tests:/zap/wrk/tests
       - ./reports:/zap/wrk/reports

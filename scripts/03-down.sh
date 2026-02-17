@@ -1,6 +1,4 @@
 #!/usr/bin/env sh
 set -eu
 
-docker compose down --remove-orphans
-
-echo "Container fermati"
+exec "$(dirname "$0")/form-login/03-down.sh"
