@@ -30,6 +30,10 @@ jobs:
       user: zap-user
       maxDuration: 1
 
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
   - type: activeScan
     parameters:
       context: playground

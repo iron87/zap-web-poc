@@ -28,7 +28,11 @@ jobs:
       user: demo-sso-user
       maxDuration: 2
 
-  - type: passive
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  - type: activeScan
     parameters:
       context: playground-sso-local
       user: demo-sso-user

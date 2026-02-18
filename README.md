@@ -1,26 +1,26 @@
 # ZAP Web Playground
 
-Playground OWASP ZAP con due scenari separati:
-- test `form-login`
-- test `sso-local` (Keycloak + oauth2-proxy)
+OWASP ZAP playground with two separate scenarios:
+- `form-login` test
+- `sso-local` test (Keycloak + oauth2-proxy)
 
-## Prerequisiti
+## Prerequisites
 
 - Docker
 - Docker Compose
 
-## Struttura
+## Structure
 
-- `app/`: applicazione Flask target
-- `tests/form-login/automation.yaml`: piano ZAP per login classico via form
-- `tests/sso-local/automation.yaml`: piano ZAP per SSO locale funzionante
-- `tests/sso-local/automation-external-idp-template.yaml`: template per IdP esterno (es. Office365/Entra)
-- `keycloak/realm-playground.json`: realm importato con client e utente demo
-- `scripts/form-login/`: script scenario form-login
-- `scripts/sso-local/`: script scenario sso-local
-- `reports/`: report generati
+- `app/`: target Flask application
+- `tests/form-login/automation.yaml`: ZAP plan for classic form login
+- `tests/sso-local/automation.yaml`: ZAP plan for working local SSO
+- `tests/sso-local/automation-external-idp-template.yaml`: template for external IdP (e.g. Office365/Entra)
+- `keycloak/realm-playground.json`: imported realm with demo client and user
+- `scripts/form-login/`: scripts for the form-login scenario
+- `scripts/sso-local/`: scripts for the sso-local scenario
+- `reports/`: generated reports
 
-## Script per scenario
+## Scripts by scenario
 
 Form-login:
 ```sh
@@ -29,42 +29,42 @@ Form-login:
 ./scripts/form-login/03-down.sh
 ```
 
-Run completo form-login:
+Full form-login run:
 ```sh
 ./scripts/form-login/00-all.sh
 ```
 
-SSO locale:
+Local SSO:
 ```sh
 ./scripts/sso-local/02-scan.sh
 ./scripts/sso-local/03-down.sh
 ```
 
-Run completo SSO locale:
+Full local SSO run:
 ```sh
 ./scripts/sso-local/00-all.sh
 ```
 
-Nota compatibilita:
-- i vecchi wrapper in `scripts/*.sh` restano disponibili e richiamano gli script nelle nuove cartelle.
+Compatibility note:
+- old wrappers in `scripts/*.sh` are still available and call scripts in the new folders.
 
-## Credenziali demo
+## Demo credentials
 
 Form-login app:
 - username: `testuser`
 - password: `testpass`
 
-SSO locale:
+Local SSO:
 - Keycloak admin: `admin` / `admin` (`http://localhost:8090`)
-- utente SSO: `demo-user` / `demo-pass`
+- SSO user: `demo-user` / `demo-pass`
 
-## URL utili
+## Useful URLs
 
 - App: `http://localhost:8080`
 - SSO browser entrypoint: `http://localhost:4180/private`
 - Keycloak: `http://localhost:8090`
 
-## Architettura SSO (Keycloak)
+## SSO Architecture (Keycloak)
 
 ```text
 Browser
@@ -73,57 +73,54 @@ Browser
   v
 sso-public (oauth2-proxy, localhost:4180)
   |
-  | 2) redirect OIDC auth
+  | 2) OIDC auth redirect
   v
 Keycloak (localhost:8090)
   |
-  | 3) login utente + callback code
+  | 3) user login + callback code
   v
 sso-public (oauth2 callback)
   |
-  | 4) exchange code -> token (verso keycloak interno)
+  | 4) code -> token exchange (against internal keycloak)
   v
 Keycloak (service DNS: keycloak:8080)
   |
-  | 5) sessione valida, proxy verso upstream
+  | 5) valid session, proxy to upstream
   v
 App Flask (app:8080)
 ```
 
-Percorso ZAP (interno Docker):
+ZAP path (inside Docker):
 ```text
-ZAP browser auth -> sso (service interno) -> Keycloak -> sso -> App
+ZAP browser auth -> sso (internal service) -> Keycloak -> sso -> App
 ```
 
-## File ZAP usati
+## ZAP files used
 
-Test form-login:
+Form-login test:
 - `tests/form-login/automation.yaml`
 
-Test SSO locale:
+Local SSO test:
 - `tests/sso-local/automation.yaml`
-- richiamato da `scripts/sso-local/02-scan.sh`
+- called by `scripts/sso-local/02-scan.sh`
 
-Come fa login ZAP nel test SSO:
-1. Usa `authentication.method: browser`.
-2. Apre `loginPageUrl: http://sso:4180/private`.
-3. Inserisce credenziali `demo-user` / `demo-pass`.
-4. Segue redirect OIDC su Keycloak e callback.
-5. Prosegue spider + active scan in sessione autenticata.
+How ZAP logs in during the SSO test:
+1. It uses `authentication.method: browser`.
+2. It opens `loginPageUrl: http://sso:4180/private`.
+3. It submits credentials `demo-user` / `demo-pass`.
+4. It follows OIDC redirects to Keycloak and callback.
+5. It runs passive scan first (`passiveScan-wait`) on collected responses.
+6. It continues with active scan as an authenticated session.
 
-## A cosa serve `automation-external-idp-template`
+Job order used in tests:
+- `spider -> passiveScan-wait -> activeScan -> report`
 
-`tests/sso-local/automation-external-idp-template.yaml` non e' un refuso:
-- e' un esempio da copiare/adattare quando vuoi usare un IdP reale esterno (non il Keycloak locale).
-- non viene usato dagli script di default.
-- richiede sostituzione di URL, username/password e regole di verifica.
+## What `automation-external-idp-template` is for
 
-## Troubleshooting
-
-Se dopo login vedi `500` su `localhost:4180`:
-- causa tipica: mismatch issuer OIDC (`keycloak:8080` vs `localhost:8090`).
-- in questo repo e' stato corretto su `sso-public` impostando:
-  - `OAUTH2_PROXY_OIDC_ISSUER_URL=http://localhost:8090/realms/playground`
+`tests/sso-local/automation-external-idp-template.yaml` is not a typo:
+- it is an example to copy/adapt when using a real external IdP (not local Keycloak)
+- it is not used by default scripts
+- it requires replacing URLs, username/password, and verification rules
 
 ## Report output
 
