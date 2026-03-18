@@ -1,0 +1,36 @@
+env:
+  contexts:
+    - name: playground-api-openapi
+      urls:
+        - http://api:8081
+      includePaths:
+        - http://api:8081/api.*
+        - http://api:8081/openapi.json.*
+  parameters:
+    failOnError: true
+    progressToStdout: true
+
+jobs:
+  - type: openapi
+    parameters:
+      context: playground-api-openapi
+      apiUrl: http://api:8081/openapi.json
+      targetUrl: http://api:8081
+
+  - type: passiveScan-wait
+    parameters:
+      maxDuration: 5
+
+  - type: report
+    parameters:
+      template: traditional-html
+      reportDir: /zap/wrk/reports
+      reportFile: zap-api-openapi-report.html
+      reportTitle: ZAP API OpenAPI Passive Report
+
+  - type: report
+    parameters:
+      template: traditional-json
+      reportDir: /zap/wrk/reports
+      reportFile: zap-api-openapi-report.json
+      reportTitle: ZAP API OpenAPI Passive Report

@@ -10,6 +10,13 @@ services:
     ports:
       - "8080:8080"
 
+  api:
+    build:
+      context: ./api
+    container_name: zap-playground-api
+    ports:
+      - "8081:8081"
+
   keycloak:
     image: quay.io/keycloak/keycloak:26.1
     container_name: zap-playground-keycloak
